@@ -1,0 +1,6 @@
+pydub===0.25.1
+numpy===2.5.1
+soundfile===0.14.0
+mlx-audio===0.4.4
+transformers===5.5.0
+audioop-lts===0.2.2

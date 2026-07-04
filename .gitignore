@@ -1,0 +1,14 @@
+# Training
+my_dataset/
+
+# Outputs
+output/
+
+# IDE
+.vscode/
+
+# Environment
+.direnv/
+__pycache__/
+
+.DS_Store

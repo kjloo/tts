@@ -16,7 +16,7 @@ def get_unique_path(directory, mode="clone", name=None, lang=None, base_filename
     
     counter = 1
     while True:
-        formatted_name = f"{stem}_{counter:02d}{suffix}"
+        formatted_name = f"{name}_{stem}_{counter:02d}{suffix}"
         new_path = directory / formatted_name
         if not new_path.exists():
             return new_path

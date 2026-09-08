@@ -8,6 +8,7 @@ A lightweight Python tool optimized for Apple Silicon (MLX) that generates text-
 - **Voice Design Mode:** Generates new custom voices entirely from text-based descriptive instructions.
 - **Space-Saving MP3 Output:** Directly converts raw numpy audio structures into compressed MP3 tracks.
 - **Interactive Prompts:** Falls back to interactive CLI menus if arguments are omitted.
+- **Web UI:** A single-page React front end over a FastAPI server for voice cloning.
 - **Apple Silicon Native:** Uses `mlx-audio` to run model weights efficiently on Mac unified memory.
 - **Automated Environments:** Integrates seamlessly with `direnv` via `.envrc` for isolated project sandboxing.
 
@@ -16,7 +17,9 @@ A lightweight Python tool optimized for Apple Silicon (MLX) that generates text-
 ## Repository Structure
 
 - `run_tts.py`: The primary engine script containing parsing logic and model inference.
-- `utils.py`: Helper functions handling path incrementing, jsonl dataset parsing, and model initialization.
+- `utils.py`: Helper functions handling path incrementing, jsonl dataset parsing, model initialization, and clone generation.
+- `server/app.py`: FastAPI server exposing the dataset options and clone generation to the web UI.
+- `web/`: Vite + React single-page front end.
 - `Makefile`: Shortcut automation for installation, execution pipelines, and audio playback.
 - `requirements.txt`: Python package dependencies list.
 - `.envrc`: Automated environment loading script (manages python binary routing).
@@ -28,6 +31,7 @@ A lightweight Python tool optimized for Apple Silicon (MLX) that generates text-
 - macOS with Apple Silicon (M1/M2/M3/M4 chips recommended).
 - [Homebrew](https://brew.sh/) installed (for automatic `ffmpeg` integration).
 - [direnv](https://direnv.net/) installed and hooked into your shell.
+- [Node.js](https://nodejs.org/) 20+ (for the web UI).
 
 ---
 
@@ -87,6 +91,17 @@ Instruct the model to synthesize an entirely artificial voice based on descripti
 ```bash
 make design INST="A fast-talking woman with a sharp Scottish accent" TEXT="Target phrase to say."
 ```
+
+### Web UI (Clone Mode Only)
+
+Run the API server and the Vite dev server in two terminals, then open http://localhost:5173:
+
+```bash
+make server
+make web
+```
+
+The page reads the speakers and labels from `my_dataset/train.jsonl`, takes the same inputs as the CLI (`text`, `lang`, `out`, `ref`, `name`), and plays back the generated MP3 from `output/`.
 
 ### Playback & Cleanup
 

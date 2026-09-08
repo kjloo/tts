@@ -1,5 +1,6 @@
 import os
 import json
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -36,9 +37,14 @@ def get_unique_path(directory, mode="clone", name=None, lang=None, base_filename
     while True:
         formatted_name = f"{name}_{stem}_{counter:02d}{suffix}"
         new_path = directory / formatted_name
-        if not new_path.exists():
+        try:
+            # Atomically reserve the path so concurrent callers cannot pick the
+            # same filename and overwrite each other's output.
+            fd = os.open(str(new_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
             return new_path
-        counter += 1
+        except FileExistsError:
+            counter += 1
 
 def get_available_names(jsonl_path):
     """Returns a sorted list of all unique names in the dataset."""
@@ -69,11 +75,21 @@ def load_reference_from_jsonl(jsonl_path, name, label):
                 return entry
     raise ValueError(f"❌ No match found for Name: '{name}' with Label: '{label}'")
 
+_MODEL_CACHE = {}
+_MODEL_LOCK = threading.Lock()
+
 def setup_tts_model(model_id):
     from mlx_audio.tts.utils import load_model
 
-    print(f"DEBUG: Loading {model_id}...")
-    return load_model(model_id, fix_mistral_regex=True)
+    # Cache models per-process so the persistent server does not reload
+    # the multi-GB model on every request.
+    with _MODEL_LOCK:
+        model = _MODEL_CACHE.get(model_id)
+        if model is None:
+            print(f"DEBUG: Loading {model_id}...")
+            model = load_model(model_id, fix_mistral_regex=True)
+            _MODEL_CACHE[model_id] = model
+        return model
 
 def save_audio(model, results, mode, name, lang, out):
     out_param = out if (out and out.strip()) else None

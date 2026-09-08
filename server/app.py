@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,7 +59,9 @@ def clone(request: CloneRequest):
         raise HTTPException(status_code=500, detail=str(error))
 
     filename = Path(out_path).name
-    return CloneResponse(filename=filename, url=f"/api/audio/{filename}")
+    # Encode the path segment so reserved characters (#, ?, %, spaces, ...) in
+    # speaker or output names do not corrupt the URL.
+    return CloneResponse(filename=filename, url=f"/api/audio/{quote(filename)}")
 
 @app.get("/api/audio/{filename}")
 def get_audio(filename: str):

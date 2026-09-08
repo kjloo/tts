@@ -32,9 +32,9 @@ setup:
 server:
 	$(PYTHON) -m uvicorn server.app:app --reload --port $(PORT)
 
-# Vite dev server; proxies /api to the backend on port 8000
+# Vite dev server; proxies /api to the backend on $(PORT)
 web:
-	cd web && npm run dev
+	cd web && VITE_API_PORT=$(PORT) npm run dev
 
 # Chained to run 'last' automatically after the python command
 clone:

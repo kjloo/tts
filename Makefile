@@ -9,7 +9,9 @@ TEXT =
 OUT = 
 INST = 
 
-.PHONY: setup clone design interactive clean last
+PORT = 8000
+
+.PHONY: setup clone design interactive clean last server web
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -22,7 +24,17 @@ setup:
 	fi
 	@echo "Installing Python packages..."
 	$(PIP) install -r requirements.txt
+	@echo "Installing web dependencies..."
+	cd web && npm install
 	@echo "✨ Setup complete!"
+
+# Backend API for the web UI (clone mode only)
+server:
+	$(PYTHON) -m uvicorn server.app:app --reload --port $(PORT)
+
+# Vite dev server; proxies /api to the backend on port 8000
+web:
+	cd web && npm run dev
 
 # Chained to run 'last' automatically after the python command
 clone:

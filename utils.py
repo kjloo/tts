@@ -1,7 +1,25 @@
 import os
 import json
 from pathlib import Path
-from mlx_audio.tts.utils import load_model
+
+import numpy as np
+import soundfile as sf
+
+CLONE_MODEL_ID = "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"
+DESIGN_MODEL_ID = "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
+
+JSONL_PATH = "my_dataset/train.jsonl"
+
+LANGUAGES = [
+    "English",
+    "Chinese",
+    "Japanese",
+    "Korean",
+    "German",
+    "French",
+    "Spanish",
+    "Italian",
+]
 
 def get_unique_path(directory, mode="clone", name=None, lang=None, base_filename=None, suffix=".mp3"):
     directory = Path(directory)
@@ -52,5 +70,35 @@ def load_reference_from_jsonl(jsonl_path, name, label):
     raise ValueError(f"❌ No match found for Name: '{name}' with Label: '{label}'")
 
 def setup_tts_model(model_id):
+    from mlx_audio.tts.utils import load_model
+
     print(f"DEBUG: Loading {model_id}...")
     return load_model(model_id, fix_mistral_regex=True)
+
+def save_audio(model, results, mode, name, lang, out):
+    out_param = out if (out and out.strip()) else None
+    out_path = get_unique_path("output", mode, name, lang, out_param, suffix=".mp3")
+
+    audio_data = np.array(results[0].audio)
+    sr = getattr(model, "sample_rate", 24000)
+
+    # soundfile natively compresses the raw data arrays to MP3 on modern systems
+    sf.write(str(out_path), audio_data, sr, format='MP3')
+    return out_path
+
+def generate_clone(text, lang, name, ref, out=None, jsonl_path=JSONL_PATH):
+    """Clones the reference voice and returns the path of the saved MP3."""
+    ref_entry = load_reference_from_jsonl(jsonl_path, name, ref)
+    audio_path = os.path.join("my_dataset", ref_entry["audio"])
+
+    model = setup_tts_model(CLONE_MODEL_ID)
+    results = list(model.generate(
+        text=text,
+        ref_audio=audio_path,
+        ref_text=ref_entry["text"],
+        language=lang
+    ))
+    if not results:
+        raise RuntimeError("Generation yielded no results.")
+
+    return save_audio(model, results, "clone", name, lang, out)

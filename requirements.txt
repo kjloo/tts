@@ -4,3 +4,5 @@ soundfile===0.14.0
 mlx-audio===0.4.4
 transformers===5.5.0
 audioop-lts===0.2.2
+fastapi===0.141.1
+uvicorn===0.52.4

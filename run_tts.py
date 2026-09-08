@@ -1,7 +1,4 @@
 import argparse
-import os
-import numpy as np
-import soundfile as sf
 import utils
 
 def interactive_picker(options, title):
@@ -32,7 +29,7 @@ def main():
         args.mode = interactive_picker(["clone", "design"], "Mode")
     
     # 2. Parameter Gathering
-    jsonl_path = "my_dataset/train.jsonl"
+    jsonl_path = utils.JSONL_PATH
     if args.mode == "clone":
         if not args.name:
             names = utils.get_available_names(jsonl_path)
@@ -46,51 +43,28 @@ def main():
             args.instruct = input("\nEnter Voice Instruction: ")
 
     if not args.lang:
-        langs = ["English", "Chinese", "Japanese", "Korean", "German", "French", "Spanish", "Italian"]
-        args.lang = interactive_picker(langs, "Language")
+        args.lang = interactive_picker(utils.LANGUAGES, "Language")
 
     if not args.text:
         args.text = input("\nEnter the text to speak: ")
 
-    # 3. Model Selection
-    model_id = (
-        "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit" if args.mode == "clone"
-        else "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
-    )
-    model = utils.setup_tts_model(model_id)
-
-    # 4. Generation
+    # 3. Generation
     print("\n⏳ Generating audio...")
     if args.mode == "clone":
-        ref_entry = utils.load_reference_from_jsonl(jsonl_path, args.name, args.ref)
-        audio_path = os.path.join("my_dataset", ref_entry["audio"])
-        
-        results = list(model.generate(
-            text=args.text, 
-            ref_audio=audio_path, 
-            ref_text=ref_entry["text"], 
-            language=args.lang
-        ))
+        out_path = utils.generate_clone(args.text, args.lang, args.name, args.ref, args.out, jsonl_path)
     else:
+        model = utils.setup_tts_model(utils.DESIGN_MODEL_ID)
         results = list(model.generate_voice_design(
             text=args.text, 
             language=args.lang, 
             instruct=args.instruct
         ))
+        if not results:
+            print("\n❌ Error: Generation yielded no results.")
+            return
+        out_path = utils.save_audio(model, results, args.mode, args.name, args.lang, args.out)
 
-    # 5. Native Save as MP3 via Soundfile
-    if results:
-        out_param = args.out if (args.out and args.out.strip()) else None
-        out_path = utils.get_unique_path("output", args.mode, args.name, args.lang, out_param, suffix=".mp3")
-        
-        audio_data = np.array(results[0].audio)
-        sr = getattr(model, "sample_rate", 24000)
-        
-        # soundfile natively compresses the raw data arrays to MP3 on modern systems
-        sf.write(str(out_path), audio_data, sr, format='MP3')
-        print(f"\n✨ Success! Saved compressed audio to: {out_path}")
-    else:
-        print("\n❌ Error: Generation yielded no results.")
+    print(f"\n✨ Success! Saved compressed audio to: {out_path}")
 
 if __name__ == "__main__":
     main()

@@ -3,7 +3,7 @@ import os
 
 
 def get_character_names() -> list[str]:
-    jsonl_path = "my_dataset/train.jsonl"
+    jsonl_path = "/Users/kaleb/Documents/Code/tts/my_dataset/train.jsonl"
     return _get_available_names(jsonl_path)
 
 

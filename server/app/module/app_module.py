@@ -1,7 +1,7 @@
 from flask import Flask
 
 # Initialize Flask app
-app: Flask = Flask()
+app: Flask = Flask(__name__)
 
 
 # Routes

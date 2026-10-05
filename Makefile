@@ -57,3 +57,4 @@ server/lint:
 .PHONY: server/format
 server/format:
 	cd server && black .
+	

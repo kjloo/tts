@@ -5,6 +5,7 @@ soundfile===0.14.0
 mlx-audio===0.4.4
 transformers===5.5.0
 audioop-lts===0.2.2
-gunicorn===26.2.0
+gunicorn===23.0.0
 ruff===0.16.10
 black===26.10.0
+eventlet===0.39.1

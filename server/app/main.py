@@ -1,3 +1,3 @@
-from module import app_module
+from app.module.app_module import app, register_all_blueprints
 
-app_module.register_all_blueprints(app_module.app)
+register_all_blueprints(app)

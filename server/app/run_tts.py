@@ -3,7 +3,8 @@ import os
 
 import numpy as np
 import soundfile as sf
-import utils
+
+from app import utils
 
 
 def interactive_picker(options, title):

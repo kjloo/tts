@@ -45,3 +45,15 @@ last:
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	@echo "Caches cleared."
+
+.PHONY: server/run
+server/run:
+	cd server && gunicorn -w 1 -k eventlet -b 0.0.0.0:5000 app.main:app
+
+.PHONY: server/lint
+server/lint:
+	cd server && ruff check . --fix
+
+.PHONY: server/format
+server/format:
+	cd server && black .

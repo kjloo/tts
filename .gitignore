@@ -12,3 +12,6 @@ output/
 __pycache__/
 
 .DS_Store
+
+# Server
+server/.ruff_cache/

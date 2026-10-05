@@ -48,7 +48,7 @@ clean:
 
 .PHONY: server/run
 server/run:
-	cd server && gunicorn -w 1 -k eventlet -b 0.0.0.0:5000 app.main:app
+	cd server && gunicorn -w 1 -k gevent -b 0.0.0.0:5000 --reload app.main:app
 
 .PHONY: server/lint
 server/lint:

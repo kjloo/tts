@@ -68,6 +68,11 @@ make server/format
 - The server listens on port 8000 by default.
 - Output MP3 files are saved under `output/`.
 
+## Testing
+- Run `make test` (or `pytest` under `server/`) to verify all unit tests pass before committing.
+- Each controller has its own test file in `server/tests/controller/` (e.g., `test_language_controller.py`).
+- Lint (`make server/lint`) and format (`make server/format`) also run as part of the test gate.
+
 ## Workflow Constraints
 - **Do not auto-commit or auto-push changes** unless explicitly instructed by the user.
 - Stage changes with `git add` and present the diff for review before committing.

@@ -51,7 +51,7 @@ def main():
             args.instruct = input("\nEnter Voice Instruction: ")
 
     if not args.lang:
-        langs = LanguageService.SUPPORTED_LANGUAGES
+        langs = LanguageService.get_supported_languages()
         args.lang = interactive_picker(langs, "Language")
 
     if not args.text:

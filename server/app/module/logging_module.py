@@ -3,6 +3,9 @@
 import logging
 from pathlib import Path
 
+# Expose the module-level logger for direct import
+logger = logging.getLogger("tts_api")
+
 
 def setup_logging(
     log_dir: str = "logs",
@@ -29,6 +32,4 @@ def setup_logging(
     return logger
 
 
-def get_logger(name: str = "tts_api") -> logging.Logger:
-    """Get a logger instance for the given name."""
-    return logging.getLogger(name)
+# Removed get_logger function; use module-level logger directly

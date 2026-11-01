@@ -54,6 +54,10 @@ server/run:
 server/lint:
 	cd server && ruff check . --fix
 
+.PHONY: server/format server/test
+test:
+	cd server && pytest tests/ -v
+
 .PHONY: server/format
 server/format:
 	cd server && black .

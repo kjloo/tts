@@ -1,5 +1,6 @@
 PYTHON = python
 PIP = pip
+PYTHONPATH = server
 
 # Default Variables (all empty to trigger interactivity/smart-naming)
 NAME =
@@ -26,16 +27,16 @@ setup:
 
 # Chained to run 'last' automatically after the python command
 clone:
-	$(PYTHON) run_tts.py --mode clone --name "$(NAME)" --ref "$(REF)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py --mode clone --name "$(NAME)" --ref "$(REF)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
 	@$(MAKE) last
 
 # Chained to run 'last' automatically after the python command
 design:
-	$(PYTHON) run_tts.py --mode design --instruct "$(INST)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py --mode design --instruct "$(INST)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
 	@$(MAKE) last
 
 interactive:
-	$(PYTHON) run_tts.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py
 	@$(MAKE) last
 
 # Finds the most recently modified .mp3 file in the output folder and plays it

@@ -1,31 +1,40 @@
 import json
 import os
+from typing import ClassVar
+
+from app.module.logging_module import get_logger
 
 
-def get_character_names() -> list[str]:
-    jsonl_path = "/Users/kaleb/Documents/Code/tts/my_dataset/train.jsonl"
-    return _get_available_names(jsonl_path)
+class DatasetService:
+    """Singleton dataset service using class-level state."""
 
+    JSONL_PATH: ClassVar[str] = "/Users/kaleb/Documents/Code/tts/my_dataset/train.jsonl"
 
-def _get_available_names(jsonl_path: str) -> list[str]:
-    """Returns a sorted list of all unique names in the dataset."""
-    names = set()
-    if os.path.exists(jsonl_path):
-        with open(jsonl_path, "r") as f:
-            for line in f:
-                entry = json.loads(line)
-                if "name" in entry:
-                    names.add(entry["name"])
-    return sorted(names)
+    _logger = get_logger("DatasetService")
 
+    @classmethod
+    def get_character_names(cls) -> list[str]:
+        return cls._get_available_names(cls.JSONL_PATH)
 
-def _get_available_labels_for_name(jsonl_path: str, name: str) -> list[str]:
-    """Returns labels specifically associated with the chosen name."""
-    labels = set()
-    if os.path.exists(jsonl_path):
-        with open(jsonl_path, "r") as f:
-            for line in f:
-                entry = json.loads(line)
-                if entry.get("name") == name and "label" in entry:
-                    labels.add(entry["label"])
-    return sorted(labels)
+    @classmethod
+    def _get_available_names(cls, jsonl_path: str) -> list[str]:
+        names = set()
+        if os.path.exists(jsonl_path):
+            with open(jsonl_path, "r") as f:
+                for line in f:
+                    entry = json.loads(line)
+                    if "name" in entry:
+                        names.add(entry["name"])
+        cls._logger.info("Loaded %d character names from %s", len(names), jsonl_path)
+        return sorted(names)
+
+    @classmethod
+    def _get_available_labels_for_name(cls, jsonl_path: str, name: str) -> list[str]:
+        labels = set()
+        if os.path.exists(jsonl_path):
+            with open(jsonl_path, "r") as f:
+                for line in f:
+                    entry = json.loads(line)
+                    if entry.get("name") == name and "label" in entry:
+                        labels.add(entry["label"])
+        return sorted(labels)

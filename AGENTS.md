@@ -67,3 +67,8 @@ make server/format
 - All Makefile targets are defined in the project `Makefile`.
 - The server listens on port 8000 by default.
 - Output MP3 files are saved under `output/`.
+
+## Workflow Constraints
+- **Do not auto-commit or auto-push changes** unless explicitly instructed by the user.
+- Stage changes with `git add` and present the diff for review before committing.
+- Wait for explicit approval before running `git commit` or `git push`.

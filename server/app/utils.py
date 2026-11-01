@@ -14,6 +14,8 @@ def get_available_names(jsonl_path):
                 entry = json.loads(line)
                 if "name" in entry:
                     names.add(entry["name"])
+    else:
+        print(f"❌ The file {jsonl_path} does not exist.")
     return sorted(names)
 
 

@@ -5,6 +5,7 @@ import numpy as np
 import soundfile as sf
 
 from app import utils
+from app.service.language_service import LanguageService
 
 
 def interactive_picker(options, title):
@@ -50,16 +51,7 @@ def main():
             args.instruct = input("\nEnter Voice Instruction: ")
 
     if not args.lang:
-        langs = [
-            "English",
-            "Chinese",
-            "Japanese",
-            "Korean",
-            "German",
-            "French",
-            "Spanish",
-            "Italian",
-        ]
+        langs = LanguageService.SUPPORTED_LANGUAGES
         args.lang = interactive_picker(langs, "Language")
 
     if not args.text:

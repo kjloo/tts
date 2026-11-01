@@ -1,11 +1,11 @@
-from flask import Blueprint, Response, jsonify
+from fastapi import APIRouter
 
 from app.service import dataset_service
 
-dataset_routes = Blueprint("dataset_routes", __name__)
+dataset_routes = APIRouter(prefix="/api/dataset", tags=["dataset"])
 
 
-@dataset_routes.route("/api/dataset/characters", methods=["GET"])
-def get_characters() -> Response:
+@dataset_routes.get("/characters")
+def get_characters():
     characters = dataset_service.get_character_names()
-    return jsonify({"characters": characters}), 200
+    return {"characters": characters}

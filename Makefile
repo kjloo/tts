@@ -48,7 +48,7 @@ clean:
 
 .PHONY: server/run
 server/run:
-	cd server && gunicorn -w 1 -k gevent -b 0.0.0.0:5000 --reload app.main:app
+	cd server && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 .PHONY: server/lint
 server/lint:

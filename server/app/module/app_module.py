@@ -20,8 +20,8 @@ app.add_middleware(
 
 # Routes
 def register_all_blueprints(app: FastAPI):
-    from app.routes.dataset_routes import dataset_routes
-    from app.routes.language_routes import language_routes
+    from app.controller.dataset_controller import dataset_routes
+    from app.controller.language_controller import language_routes
 
     routers = [
         dataset_routes,

@@ -1,15 +1,16 @@
-PYTHON = python
+PYTHON = python3
 PIP = pip
+PYTHONPATH = server
 
 # Default Variables (all empty to trigger interactivity/smart-naming)
-NAME = 
-REF = 
-LANG = 
-TEXT = 
-OUT = 
-INST = 
+NAME =
+REF =
+LANG =
+TEXT =
+OUT =
+INST =
 
-.PHONY: setup clone design interactive clean last
+.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -26,16 +27,16 @@ setup:
 
 # Chained to run 'last' automatically after the python command
 clone:
-	$(PYTHON) run_tts.py --mode clone --name "$(NAME)" --ref "$(REF)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py --mode clone --name "$(NAME)" --ref "$(REF)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
 	@$(MAKE) last
 
 # Chained to run 'last' automatically after the python command
 design:
-	$(PYTHON) run_tts.py --mode design --instruct "$(INST)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py --mode design --instruct "$(INST)" --lang "$(LANG)" --text "$(TEXT)" --out "$(OUT)"
 	@$(MAKE) last
 
 interactive:
-	$(PYTHON) run_tts.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) server/app/run_tts.py
 	@$(MAKE) last
 
 # Finds the most recently modified .mp3 file in the output folder and plays it
@@ -45,3 +46,23 @@ last:
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	@echo "Caches cleared."
+
+.PHONY: server/run
+server/run:
+	cd server && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+.PHONY: server/lint
+server/lint:
+	cd server && ruff check . --fix
+
+.PHONY: server/test
+server/test:
+	cd server && pytest tests/ -v
+
+.PHONY: server/setup
+server/setup:
+	$(MAKE) setup
+
+.PHONY: server/format
+server/format:
+	cd server && black .

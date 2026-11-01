@@ -2,6 +2,32 @@
 
 A lightweight Python tool optimized for Apple Silicon (MLX) that generates text-to-speech audio using Alibaba's `Qwen3-TTS-12Hz` models. It supports both **voice cloning** (from local datasets) and **voice design** (via prompt descriptions). To maximize disk space efficiency, all outputs are compressed and saved directly as `.mp3` files.
 
+## API Endpoints
+
+### `GET /api/languages/`
+
+Returns a list of all supported TTS languages.
+
+**Response:**
+```json
+{
+  "languages": [
+    "English",
+    "Chinese",
+    "Japanese",
+    "Korean",
+    "German",
+    "French",
+    "Spanish",
+    "Italian"
+  ]
+}
+```
+
+**Status:** `200 OK`
+
+---
+
 ## Features
 
 - **Voice Cloning Mode:** Instantly mimics specific speakers using local reference files.

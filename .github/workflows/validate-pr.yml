@@ -1,0 +1,32 @@
+name: Validate PR
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened]
+
+jobs:
+  server-test:
+    name: Server Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mecab libmecab-dev mecab-ipadic-utf8 ffmpeg
+
+      - name: Install Python dependencies
+        run: make server/setup
+
+      - name: Run server tests
+        run: make server/test
+        

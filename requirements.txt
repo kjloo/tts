@@ -1,6 +1,11 @@
 pydub===0.25.1
 numpy===2.5.1
 soundfile===0.14.0
-mlx-audio===0.4.4
-transformers===5.5.0
+mlx-audio===0.6.3
+transformers===5.22.1
 audioop-lts===0.2.2
+fastapi===0.162.0
+uvicorn===0.54.0
+ruff===0.17.3
+black===26.10.1
+pytest===9.2.0

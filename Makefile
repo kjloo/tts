@@ -2,14 +2,14 @@ PYTHON = python
 PIP = pip
 
 # Default Variables (all empty to trigger interactivity/smart-naming)
-NAME = 
-REF = 
-LANG = 
-TEXT = 
-OUT = 
-INST = 
+NAME =
+REF =
+LANG =
+TEXT =
+OUT =
+INST =
 
-.PHONY: setup clone design interactive clean last
+.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -54,11 +54,14 @@ server/run:
 server/lint:
 	cd server && ruff check . --fix
 
-.PHONY: server/format server/test
-test:
+.PHONY: server/test
+server/test:
 	cd server && pytest tests/ -v
+
+.PHONY: server/setup
+server/setup:
+	$(MAKE) setup
 
 .PHONY: server/format
 server/format:
 	cd server && black .
-	

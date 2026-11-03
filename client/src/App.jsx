@@ -1,60 +1,65 @@
-import React, { useState, useEffect } from 'react'
-import { fetchLanguages } from './api/language'
-import { fetchCharacters } from './api/dataset'
-import { generateSpeech } from './api/generate'
+import React, { useState, useEffect } from 'react';
+import { fetchLanguages } from './api/language';
+import { fetchCharacters } from './api/dataset';
+import { generateSpeech } from './api/generate';
 
 const App = () => {
-  const [languages, setLanguages] = useState([])
-  const [languagesLoading, setLanguagesLoading] = useState(true)
+  const [languages, setLanguages] = useState([]);
+  const [languagesLoading, setLanguagesLoading] = useState(true);
 
-  const [characters, setCharacters] = useState([])
-  const [charactersLoading] = useState(true)
+  const [characters, setCharacters] = useState([]);
+  const [charactersLoading] = useState(true);
 
-  const [selectedLang, setSelectedLang] = useState('')
-  const [selectedName, setSelectedName] = useState('')
-  const [selectedRef, setSelectedRef] = useState('')
-  const [text, setText] = useState('')
-  const [filename, setFilename] = useState('')
-  const [generating, setGenerating] = useState(false)
-  const [error, setError] = useState('')
-  const [mp3Url, setMp3Url] = useState('')
+  const [selectedLang, setSelectedLang] = useState('');
+  const [selectedName, setSelectedName] = useState('');
+  const [selectedRef, setSelectedRef] = useState('');
+  const [text, setText] = useState('');
+  const [filename, setFilename] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const [mp3Url, setMp3Url] = useState('');
 
   // Fetch languages on mount
   useEffect(() => {
-    setLanguagesLoading(true)
+    setLanguagesLoading(true);
     fetchLanguages()
       .then((langs) => {
-        setLanguages(langs)
-        setSelectedLang(langs[0] || '')
+        setLanguages(langs);
+        setSelectedLang(langs[0] || '');
       })
-      .finally(() => setLanguagesLoading(false))
-  }, [])
+      .finally(() => setLanguagesLoading(false));
+  }, []);
 
   // Fetch characters (with refs) on mount
   useEffect(() => {
-    setCharactersLoading(true)
+    setCharactersLoading(true);
     fetchCharacters()
       .then((chars) => {
-        setCharacters(chars)
+        setCharacters(chars);
         if (chars.length > 0) {
-          setSelectedName(chars[0].name)
-          setSelectedRef(chars[0].refs[0] || '')
+          setSelectedName(chars[0].name);
+          setSelectedRef(chars[0].refs[0] || '');
         }
       })
-      .finally(() => setCharactersLoading(false))
-  }, [])
+      .finally(() => setCharactersLoading(false));
+  }, []);
 
   const handleGenerate = async () => {
-    setGenerating(true)
-    setError('')
+    setGenerating(true);
+    setError('');
     try {
-      const url = await generateSpeech({ text, lang: selectedLang, name: selectedName, ref: selectedRef })
-      setMp3Url(url)
+      const url = await generateSpeech({
+        text,
+        lang: selectedLang,
+        name: selectedName,
+        ref: selectedRef,
+      });
+      setMp3Url(url);
     } catch (err) {
-      setError(err.message || 'Generation failed')
+      setError(err.message || 'Generation failed');
     }
-    setGenerating(false)
-  }
+    setGenerating(false);
+  };
 
   return (
     <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem', fontFamily: 'sans-serif' }}>
@@ -62,12 +67,14 @@ const App = () => {
 
       {/* Language Dropdown */}
       <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="language" style={{ display: 'block', marginBottom: '0.5rem' }}>Language:</label>
+        <label htmlFor="language" style={{ display: 'block', marginBottom: '0.5rem' }}>
+          Language:
+        </label>
         <select
           id="language"
           value={selectedLang}
           onChange={(e) => {
-            setSelectedLang(e.target.value)
+            setSelectedLang(e.target.value);
             // When language changes, could reload names if needed - kept simple
           }}
         >
@@ -78,12 +85,16 @@ const App = () => {
             </option>
           ))}
         </select>
-        {languagesLoading && <p style={{ fontSize: '0.8rem', color: 'gray' }}>Loading languages...</p>}
+        {languagesLoading && (
+          <p style={{ fontSize: '0.8rem', color: 'gray' }}>Loading languages...</p>
+        )}
       </div>
 
       {/* Name/Ref Selector - populated from characters endpoint */}
       <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem' }}>Name with Ref:</label>
+        <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem' }}>
+          Name with Ref:
+        </label>
         <select id="name" value={selectedName} onChange={(e) => setSelectedName(e.target.value)}>
           <option value="">Select a name</option>
           {characters.map((char) => (
@@ -97,7 +108,9 @@ const App = () => {
 
       {/* Text Input */}
       <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="text" style={{ display: 'block', marginBottom: '0.5rem' }}>Text to speak:</label>
+        <label htmlFor="text" style={{ display: 'block', marginBottom: '0.5rem' }}>
+          Text to speak:
+        </label>
         <textarea
           id="text"
           rows={3}
@@ -109,7 +122,9 @@ const App = () => {
 
       {/* Filename Input */}
       <div style={{ marginBottom: '1rem' }}>
-        <label htmlFor="filename" style={{ display: 'block', marginBottom: '0.5rem' }}>Output filename (without .mp3):</label>
+        <label htmlFor="filename" style={{ display: 'block', marginBottom: '0.5rem' }}>
+          Output filename (without .mp3):
+        </label>
         <input
           id="filename"
           value={filename}
@@ -138,11 +153,7 @@ const App = () => {
       </div>
 
       {/* Error Message */}
-      {error && (
-        <div style={{ marginTop: '1rem', color: 'red', textAlign: 'center' }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ marginTop: '1rem', color: 'red', textAlign: 'center' }}>{error}</div>}
 
       {/* MP3 Download Link */}
       {mp3Url && (
@@ -157,7 +168,7 @@ const App = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;

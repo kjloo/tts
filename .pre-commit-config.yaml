@@ -12,3 +12,15 @@ repos:
         entry: make server/format
         language: system
         pass_filenames: false
+
+      - id: client-lint
+        name: Client Lint (ESLint)
+        entry: make client/lint
+        language: system
+        pass_filenames: false
+
+      - id: client-format
+        name: Client Format (Prettier)
+        entry: make client/format
+        language: system
+        pass_filenames: false

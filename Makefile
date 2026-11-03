@@ -10,7 +10,7 @@ TEXT =
 OUT =
 INST =
 
-.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last client/setup client/build client/run client/test client/clean
+.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last client/setup client/build client/run client/test client/clean client/lint client/format
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -83,3 +83,9 @@ client/test: client/setup
 
 client/clean:
 	cd client && rm -rf node_modules dist
+
+client/lint:
+	cd client && npm run lint
+
+client/format:
+	cd client && npm run format

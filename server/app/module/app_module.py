@@ -21,12 +21,17 @@ app.add_middleware(
 # Routes
 def register_all_blueprints(app: FastAPI):
     from app.controller.dataset_controller import dataset_routes
+    from app.controller.generate_routes import generate_routes  # New generate routes
     from app.controller.language_controller import language_routes
 
     routers = [
         dataset_routes,
         language_routes,
+        generate_routes,  # Add generate routes
     ]
     # Register all routers
     for router in routers:
         app.include_router(router)
+
+
+register_all_blueprints(app)

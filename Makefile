@@ -10,7 +10,7 @@ TEXT =
 OUT =
 INST =
 
-.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last
+.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last client/setup client/build client/run client/clean
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -45,6 +45,7 @@ last:
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+	$(MAKE) client/clean
 	@echo "Caches cleared."
 
 .PHONY: server/run
@@ -66,3 +67,16 @@ server/setup:
 .PHONY: server/format
 server/format:
 	cd server && black .
+
+# Client targets
+client/setup:
+	cd client && npm install
+
+client/build:
+	cd client && npm run build
+
+client/run:
+	cd client && npm start
+
+client/clean:
+	cd client && rm -rf node_modules dist

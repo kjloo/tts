@@ -27,12 +27,5 @@ class DatasetService:
         return sorted(names)
 
     @classmethod
-    def _get_available_labels_for_name(cls, jsonl_path: str, name: str) -> list[str]:
-        labels = set()
-        if os.path.exists(jsonl_path):
-            with open(jsonl_path, "r") as f:
-                for line in f:
-                    entry = json.loads(line)
-                    if entry.get("name") == name and "label" in entry:
-                        labels.add(entry["label"])
-        return sorted(labels)
+    def get_available_labels_for_name(cls, name: str) -> list[str]:
+        return cls._get_available_labels_for_name(cls.JSONL_PATH, name)

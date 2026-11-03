@@ -63,6 +63,35 @@ make server/lint
 make server/format
 ```
 
+## Development / Client
+
+### Install client dependencies
+```bash
+make client/setup
+```
+
+### Run client dev server
+```bash
+make client/run
+```
+Runs the Vite dev server (Vite on `http://localhost:5173`, proxied to server `localhost:8000`).
+
+### Build client for production
+```bash
+make client/build
+```
+
+### Run client tests
+```bash
+make client/test
+```
+Runs Vitest under `client/`. Client unit tests live alongside source in `client/src/api/__tests__/` (and similar).
+
+### Clean client
+```bash
+make client/clean
+```
+
 ## Notes
 - All Makefile targets are defined in the project `Makefile`.
 - The server listens on port 8000 by default.
@@ -71,6 +100,8 @@ make server/format
 ## Testing
 - Run `make test` (or `pytest` under `server/`) to verify all unit tests pass before committing.
 - Each controller has its own test file in `server/tests/controller/` (e.g., `test_language_controller.py`).
+- Run `make client/test` (or `npm test` under `client/`) to verify client unit tests pass.
+- **Development requires that both server and client tests pass before committing.**
 - Lint (`make server/lint`) and format (`make server/format`) also run as part of the test gate.
 
 ## Workflow Constraints

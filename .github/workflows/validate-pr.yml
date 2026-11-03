@@ -2,31 +2,53 @@ name: Validate PR
 
 on:
   pull_request:
-    types: [synchronize, opened, reopened]
+    branches: [ main ]
 
 jobs:
-  server-test:
-    name: Server Test
+  server-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install dependencies
+        run: |
+          cd server
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+          
+      - name: Run server tests
+        working-directory: server
+        run: |
+          python -m pip install -r requirements.txt
+          pip install pytest
+          pytest tests/ -v
+          
+  client-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          lfs: true
-
+      - uses: actions/checkout@v4
+      
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.13"
-
-      - name: Install system dependencies
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y mecab libmecab-dev mecab-ipadic-utf8 ffmpeg
-
-      - name: Install Python dependencies
-        run: make server/setup
-
-      - name: Run server tests
-        run: make server/test
-        
+          cd client
+          npm install
+          
+      - name: Run client tests
+        working-directory: client
+        run: |
+          npm install
+          npm test

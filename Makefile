@@ -49,7 +49,7 @@ clean:
 	@echo "Caches cleared."
 
 .PHONY: server/run
-server/run:
+server/run: server/setup
 	cd server && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 .PHONY: server/lint
@@ -57,7 +57,7 @@ server/lint:
 	cd server && ruff check . --fix
 
 .PHONY: server/test
-server/test:
+server/test: server/setup
 	cd server && pytest tests/ -v
 
 .PHONY: server/setup
@@ -75,10 +75,10 @@ client/setup:
 client/build:
 	cd client && npm run build
 
-client/run:
+client/run: client/setup
 	cd client && npm start
 
-client/test:
+client/test: client/setup
 	cd client && npm test
 
 client/clean:

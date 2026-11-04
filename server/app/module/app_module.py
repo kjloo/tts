@@ -18,6 +18,12 @@ app.add_middleware(
 )
 
 
+# Health check
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok"}
+
+
 # Routes
 def register_all_blueprints(app: FastAPI):
     from app.controller.dataset_controller import dataset_routes

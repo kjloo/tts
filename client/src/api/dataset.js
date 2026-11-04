@@ -1,8 +1,12 @@
 const BASE = '/api';
 
 export const fetchCharacters = async () => {
-  const resp = await fetch(`${BASE}/dataset/characters`);
-  if (!resp.ok) throw new Error('Failed to fetch characters');
-  const data = await resp.json();
-  return data.characters || [];
+  try {
+    const resp = await fetch(`${BASE}/dataset/characters`);
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return data.characters || [];
+  } catch {
+    return [];
+  }
 };

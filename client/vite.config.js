@@ -8,7 +8,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', () => {}); // suppress ECONNREFUSED noise
+        },
       },
+    },
+    hmr: {
+      overlay: false,
     },
   },
 });

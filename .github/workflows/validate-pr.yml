@@ -49,4 +49,3 @@ jobs:
 
       - name: Run client tests
         run: make client/test
-        

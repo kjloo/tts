@@ -118,3 +118,55 @@ make design INST="A fast-talking woman with a sharp Scottish accent" TEXT="Targe
 
 - **Play Last Track:** Run `make last` to playback your most recently generated MP3 file via native terminal audio.
 - **Clear Caches:** Run `make clean` to scrub local `__pycache__` directories from your workplace.
+
+## Client Development
+
+The frontend is a Vite + React app located in `client/`. You will need Node.js and npm installed.
+
+### Install client dependencies
+
+```bash
+make client/setup
+```
+
+This runs `npm install` inside `client/`.
+
+### Run client tests
+
+```bash
+make client/test
+```
+
+This runs `vitest run` inside `client/`. Tests live alongside source in `client/src/api/__tests__/` (and similar).
+
+### Run client dev server
+
+```bash
+make client/run
+```
+
+Starts the Vite dev server on `http://localhost:5173`, proxied to the server at `localhost:8000`.
+
+### Build client for production
+
+```bash
+make client/build
+```
+
+Runs `vite build` inside `client/`.
+
+### Clean client
+
+```bash
+make client/clean
+```
+
+Removes `node_modules` and `dist` from `client/`.
+
+### Full client clean
+
+```bash
+make clean
+```
+
+Clears both Python `__pycache__` directories and client build artifacts.

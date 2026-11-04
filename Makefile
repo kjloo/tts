@@ -10,7 +10,7 @@ TEXT =
 OUT =
 INST =
 
-.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last
+.PHONY: setup server/setup server/test server/run server/lint server/format clone design interactive clean last client/setup client/build client/run client/test client/clean client/lint client/format
 
 # Installs system-level ffmpeg (via Homebrew) and Python dependencies
 setup:
@@ -45,10 +45,11 @@ last:
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+	$(MAKE) client/clean
 	@echo "Caches cleared."
 
 .PHONY: server/run
-server/run:
+server/run: server/setup
 	cd server && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 .PHONY: server/lint
@@ -56,7 +57,7 @@ server/lint:
 	cd server && ruff check . --fix
 
 .PHONY: server/test
-server/test:
+server/test: server/setup
 	cd server && pytest tests/ -v
 
 .PHONY: server/setup
@@ -66,3 +67,25 @@ server/setup:
 .PHONY: server/format
 server/format:
 	cd server && black .
+
+# Client targets
+client/setup:
+	cd client && npm install
+
+client/build:
+	cd client && npm run build
+
+client/run: client/setup
+	cd client && npm start
+
+client/test: client/setup
+	cd client && npm test
+
+client/clean:
+	cd client && rm -rf node_modules dist
+
+client/lint:
+	cd client && npm run lint
+
+client/format:
+	cd client && npm run format

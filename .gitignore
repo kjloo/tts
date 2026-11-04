@@ -16,5 +16,9 @@ __pycache__/
 # Server
 server/.ruff_cache/
 
+# Client
+client/node_modules/
+client/dist/
+
 # Logs
 logs/

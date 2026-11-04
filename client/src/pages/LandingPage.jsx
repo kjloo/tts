@@ -18,6 +18,7 @@ const LandingPage = () => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [mp3Url, setMp3Url] = useState('');
+  const [mp3Filename, setMp3Filename] = useState('');
 
   // Fetch languages on mount
   useEffect(() => {
@@ -63,14 +64,17 @@ const LandingPage = () => {
   const handleGenerate = async () => {
     setGenerating(true);
     setError('');
+    setMp3Url('');
     try {
-      const url = await generateSpeech({
+      const result = await generateSpeech({
         text,
         lang: selectedLang,
         name: selectedName,
         ref: selectedRef,
+        filename,
       });
-      setMp3Url(url);
+      setMp3Url(result.url);
+      setMp3Filename(result.filename);
     } catch (err) {
       setError(err.message || 'Generation failed');
     }
@@ -196,6 +200,10 @@ const LandingPage = () => {
           placeholder="my_audio_file"
           style={{ width: '100%', padding: '0.5rem', fontSize: '1rem', boxSizing: 'border-box' }}
         />
+        <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' }}>
+          Saved as &lt;speaker&gt;_&lt;filename&gt;_01.mp3, incrementing the number if it already
+          exists.
+        </p>
       </div>
 
       {/* Generate Button */}
@@ -240,16 +248,25 @@ const LandingPage = () => {
       {/* Error Message */}
       {error && <div style={{ marginTop: '1rem', color: 'red', textAlign: 'center' }}>{error}</div>}
 
-      {/* MP3 Download Link */}
+      {/* MP3 Player and Download Link */}
       {mp3Url && (
         <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-          <a
-            href={mp3Url}
-            download={filename ? `${filename}.mp3` : 'output.mp3'}
-            style={{ color: 'green', textDecoration: 'underline', fontWeight: 500 }}
+          <audio
+            controls
+            src={mp3Url}
+            style={{ width: '100%', maxWidth: '400px', marginBottom: '0.5rem' }}
           >
-            Download {filename || 'output.mp3'}
-          </a>
+            Your browser does not support the audio element.
+          </audio>
+          <div>
+            <a
+              href={mp3Url}
+              download={mp3Filename || 'output.mp3'}
+              style={{ color: 'green', textDecoration: 'underline', fontWeight: 500 }}
+            >
+              Download {mp3Filename || 'output.mp3'}
+            </a>
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,8 @@ import { generateSpeech } from '../generate.js';
 
 describe('generateSpeech', () => {
   it('generates speech successfully', async () => {
-    const mockFilepath = '/api/output/test.mp3';
+    const mockFilepath = '/api/output/Fiora_test.mp3';
+    const mockFilename = 'Fiora_test.mp3';
     const mockBlob = new Blob(['test audio content'], { type: 'audio/mpeg' });
     const mockUrl = 'blob:test-url';
 
@@ -12,7 +13,7 @@ describe('generateSpeech', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ filepath: mockFilepath }),
+          json: () => Promise.resolve({ filepath: mockFilepath, filename: mockFilename }),
         }),
       )
       .mockImplementationOnce(() =>
@@ -29,12 +30,22 @@ describe('generateSpeech', () => {
       lang: 'English',
       name: 'Fiora',
       ref: 'aggressive',
+      filename: 'test',
     });
 
-    expect(result).toBe(mockUrl);
+    expect(result).toEqual({ url: mockUrl, filename: mockFilename });
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/generate',
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          text: 'Hello world',
+          lang: 'English',
+          name: 'Fiora',
+          ref: 'aggressive',
+          filename: 'test',
+        }),
+      }),
     );
     expect(createObjectURLSpy).toHaveBeenCalledWith(mockBlob);
     createObjectURLSpy.mockRestore();

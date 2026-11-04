@@ -1,5 +1,11 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+OUTPUT_DIR = Path(__file__).resolve().parents[2] / "output"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Initialize FastAPI app
 app: FastAPI = FastAPI(
@@ -38,6 +44,9 @@ def register_all_blueprints(app: FastAPI):
     # Register all routers
     for router in routers:
         app.include_router(router)
+
+    # Serve generated MP3s so the client can play and download them.
+    app.mount("/api/output", StaticFiles(directory=OUTPUT_DIR), name="output")
 
 
 register_all_blueprints(app)

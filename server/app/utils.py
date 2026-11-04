@@ -43,11 +43,14 @@ def get_unique_path(
         stem = f"{speaker}_{language}"
     else:
         stem = Path(base_filename).stem
+        if name:
+            # Prefix the chosen filename with the speaker name.
+            stem = f"{name}_{stem}"
 
+    # Always index the file, starting at _01 (e.g. Fiora_hello_01.mp3).
     counter = 1
     while True:
-        formatted_name = f"{name}_{stem}_{counter:02d}{suffix}"
-        new_path = directory / formatted_name
+        new_path = directory / f"{stem}_{counter:02d}{suffix}"
         if not new_path.exists():
             return new_path
         counter += 1

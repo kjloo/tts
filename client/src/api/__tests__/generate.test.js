@@ -26,6 +26,7 @@ describe('generateSpeech', () => {
     const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockUrl);
 
     const result = await generateSpeech({
+      mode: 'clone',
       text: 'Hello world',
       lang: 'English',
       name: 'Fiora',
@@ -39,6 +40,7 @@ describe('generateSpeech', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
+          mode: 'clone',
           text: 'Hello world',
           lang: 'English',
           name: 'Fiora',
@@ -48,6 +50,63 @@ describe('generateSpeech', () => {
       }),
     );
     expect(createObjectURLSpy).toHaveBeenCalledWith(mockBlob);
+    createObjectURLSpy.mockRestore();
+  });
+
+  it('passes generation settings through in generate mode', async () => {
+    const mockBlob = new Blob(['test audio content'], { type: 'audio/mpeg' });
+
+    global.fetch = vi
+      .fn()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              filepath: '/api/output/Design_test_01.mp3',
+              filename: 'Design_test_01.mp3',
+            }),
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve(mockBlob),
+        }),
+      );
+
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+
+    await generateSpeech({
+      mode: 'generate',
+      text: 'Hello world',
+      lang: 'English',
+      filename: 'test',
+      instruct: 'A calm voice',
+      temperature: 0.8,
+      top_k: 40,
+      top_p: 0.95,
+      repetition_penalty: 1.1,
+      max_tokens: 1024,
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/generate',
+      expect.objectContaining({
+        body: JSON.stringify({
+          mode: 'generate',
+          text: 'Hello world',
+          lang: 'English',
+          filename: 'test',
+          instruct: 'A calm voice',
+          temperature: 0.8,
+          top_k: 40,
+          top_p: 0.95,
+          repetition_penalty: 1.1,
+          max_tokens: 1024,
+        }),
+      }),
+    );
     createObjectURLSpy.mockRestore();
   });
 

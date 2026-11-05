@@ -31,7 +31,7 @@ const LandingPage = () => {
 
   const [languages, setLanguages] = useState([]);
   const [languagesLoading, setLanguagesLoading] = useState(true);
-  const [selectedLang, setSelectedLang] = useState('');
+  const [selectedLang, setSelectedLang] = useState('ja');
 
   const [characters, setCharacters] = useState([]);
   const [charactersLoading, setCharactersLoading] = useState(true);

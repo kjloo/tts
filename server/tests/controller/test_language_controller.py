@@ -14,9 +14,9 @@ def test_get_supported_languages():
     data = response.json()
     assert "languages" in data
     assert data["languages"] == [
+        "Japanese",
         "English",
         "Chinese",
-        "Japanese",
         "Korean",
         "German",
         "French",

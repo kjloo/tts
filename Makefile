@@ -85,7 +85,7 @@ client/clean:
 	cd client && rm -rf node_modules dist
 
 client/lint:
-	cd client && npm run lint
+	cd client && npx eslint .
 
 client/format:
 	cd client && npm run format

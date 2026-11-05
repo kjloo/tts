@@ -21,9 +21,9 @@ Returns all supported languages for text-to-speech generation.
 ```json
 {
   "languages": [
+    "Japanese",
     "English",
     "Chinese",
-    "Japanese",
     "Korean",
     "German",
     "French",

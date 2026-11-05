@@ -35,10 +35,10 @@ export default [
     },
   },
   {
-    ignores: ['dist', 'node_modules', 'coverage'],
+    ignores: ['dist', 'node_modules', 'coverage', '.vite'],
   },
   {
-    ignores: ['dist', 'node_modules', 'coverage'],
+    ignores: ['dist', 'node_modules', 'coverage', '.vite'],
     files: ['**/*.test.js'],
     rules: {
       'no-undef': 'off',

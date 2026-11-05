@@ -5,9 +5,9 @@ class LanguageService:
     """Singleton language service using class-level state."""
 
     SUPPORTED_LANGUAGES: ClassVar[list[str]] = [
+        "Japanese",
         "English",
         "Chinese",
-        "Japanese",
         "Korean",
         "German",
         "French",

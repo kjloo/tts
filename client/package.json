@@ -27,7 +27,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "eslint .",
+    "lint": "npx eslint .",
     "format": "prettier --write ."
   },
   "browserslist": [

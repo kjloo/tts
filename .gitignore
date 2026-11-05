@@ -19,6 +19,7 @@ server/.ruff_cache/
 # Client
 client/node_modules/
 client/dist/
+client/.vite/
 
 # Logs
 logs/

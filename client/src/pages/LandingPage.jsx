@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { fetchLanguages } from '../api/language';
 import { fetchCharacters } from '../api/dataset';
 import { generateSpeech } from '../api/generate';
 
-const inputStyle = {
-  width: '100%',
-  padding: '0.5rem',
-  fontSize: '1rem',
-  boxSizing: 'border-box',
-};
-
-const labelStyle = { display: 'block', marginBottom: '0.5rem' };
-const fieldStyle = { marginBottom: '1rem' };
-const helpStyle = { fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' };
+// Memoized shared styles to prevent unnecessary re-render on every state update
+const styles = useMemo(
+  () => ({
+    inputStyle: {
+      width: '100%',
+      padding: '0.5rem',
+      fontSize: '1rem',
+      boxSizing: 'border-box',
+    },
+    labelStyle: { display: 'block', marginBottom: '0.5rem' },
+    fieldStyle: { marginBottom: '1rem' },
+    helpStyle: { fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' },
+  }),
+  [],
+);
 
 const modeButtonStyle = (active) => ({
   flex: 1,
@@ -53,6 +58,14 @@ const LandingPage = () => {
   const [error, setError] = useState('');
   const [mp3Url, setMp3Url] = useState('');
   const [mp3Filename, setMp3Filename] = useState('');
+
+  // Input refs for focus/caret stabilization during state updates and paste
+  const textRef = useRef(null);
+  const filenameRef = useRef(null);
+  const instructRef = useRef(null);
+
+  // Hover state for buttons to ensure instant hover feedback
+  const [hoveredButton, setHoveredButton] = useState(null);
 
   // Fetch languages on mount
   useEffect(() => {
@@ -147,50 +160,80 @@ const LandingPage = () => {
 
   const canGenerate = commonReady && modeReady;
 
-  const samplingFields = [
-    {
-      id: 'temperature',
-      label: 'Temperature',
-      value: temperature,
-      onChange: setTemperature,
-      min: '0',
-      max: '2',
-      step: '0.05',
-    },
-    {
-      id: 'top-k',
-      label: 'Top K',
-      value: topK,
-      onChange: setTopK,
-      min: '0',
-      step: '1',
-    },
-    {
-      id: 'top-p',
-      label: 'Top P',
-      value: topP,
-      onChange: setTopP,
-      min: '0',
-      max: '1',
-      step: '0.05',
-    },
-    {
-      id: 'repetition-penalty',
-      label: 'Repetition penalty',
-      value: repetitionPenalty,
-      onChange: setRepetitionPenalty,
-      min: '0',
-      step: '0.05',
-    },
-    {
-      id: 'max-tokens',
-      label: 'Max tokens',
-      value: maxTokens,
-      onChange: setMaxTokens,
-      min: '1',
-      step: '64',
-    },
-  ];
+  const samplingFields = useMemo(
+    () => [
+      {
+        id: 'temperature',
+        label: 'Temperature',
+        value: temperature,
+        onChange: setTemperature,
+        min: '0',
+        max: '2',
+        step: '0.05',
+      },
+      {
+        id: 'top-k',
+        label: 'Top K',
+        value: topK,
+        onChange: setTopK,
+        min: '0',
+        step: '1',
+      },
+      {
+        id: 'top-p',
+        label: 'Top P',
+        value: topP,
+        onChange: setTopP,
+        min: '0',
+        max: '1',
+        step: '0.05',
+      },
+      {
+        id: 'repetition-penalty',
+        label: 'Repetition penalty',
+        value: repetitionPenalty,
+        onChange: setRepetitionPenalty,
+        min: '0',
+        step: '0.05',
+      },
+      {
+        id: 'max-tokens',
+        label: 'Max tokens',
+        value: maxTokens,
+        onChange: setMaxTokens,
+        min: '1',
+        step: '64',
+      },
+    ],
+    [temperature, topK, topP, repetitionPenalty, maxTokens],
+  );
+
+  // Handle paste for text inputs using the Clipboard API
+  // to ensure immediate response after click, avoiding any
+  // async delay from native paste event handling.
+  const handlePaste = useCallback((e, setValue) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text/plain');
+    if (!pastedText) return;
+
+    setValue((prev) => prev + pastedText);
+
+    // Preserve focus/cursor position after paste
+    const input = e.target;
+    input.focus();
+  }, []);
+
+  // Create input element props with paste handling, hover, and focus stabilization
+  const makeInputProps = useCallback(
+    (valueRef, value, onChange, inputId, pasteHandler) => ({
+      id: inputId,
+      value,
+      onChange: (e) => onChange(e.target.value),
+      onPaste: (e) => pasteHandler(e, onChange),
+      ref: valueRef,
+    }),
+    [],
+  );
 
   return (
     <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem', fontFamily: 'sans-serif' }}>
@@ -206,27 +249,37 @@ const LandingPage = () => {
         <button
           type="button"
           onClick={() => setMode('clone')}
-          style={modeButtonStyle(mode === 'clone')}
+          onMouseEnter={() => setHoveredButton('clone')}
+          onMouseLeave={() => setHoveredButton(null)}
+          style={{
+            ...modeButtonStyle(mode === 'clone'),
+            border: hoveredButton === 'clone' ? '1px solid #004a99' : '1px solid #0066cc',
+          }}
         >
           Voice Clone
         </button>
         <button
           type="button"
           onClick={() => setMode('generate')}
-          style={modeButtonStyle(mode === 'generate')}
+          onMouseEnter={() => setHoveredButton('generate')}
+          onMouseLeave={() => setHoveredButton(null)}
+          style={{
+            ...modeButtonStyle(mode === 'generate'),
+            border: hoveredButton === 'generate' ? '1px solid #004a99' : '1px solid #0066cc',
+          }}
         >
           Generate Voice
         </button>
       </div>
-      <p style={{ ...helpStyle, marginBottom: '1.5rem' }}>
+      <p style={{ ...styles.helpStyle, marginBottom: '1.5rem' }}>
         {mode === 'clone'
           ? 'Uses the selected speaker’s reference audio and transcript.'
           : 'Creates a voice from a text description with configurable sampling.'}
       </p>
 
       {/* Language Dropdown */}
-      <div style={fieldStyle}>
-        <label htmlFor="language" style={labelStyle}>
+      <div style={styles.fieldStyle}>
+        <label htmlFor="language" style={styles.labelStyle}>
           Language:
         </label>
         <select
@@ -234,7 +287,7 @@ const LandingPage = () => {
           value={selectedLang}
           onChange={(e) => setSelectedLang(e.target.value)}
           disabled={languagesLoading}
-          style={inputStyle}
+          style={styles.inputStyle}
         >
           {languages.map((lang) => (
             <option key={lang} value={lang}>
@@ -242,14 +295,14 @@ const LandingPage = () => {
             </option>
           ))}
         </select>
-        {languagesLoading && <p style={helpStyle}>Loading languages...</p>}
+        {languagesLoading && <p style={styles.helpStyle}>Loading languages...</p>}
       </div>
 
       {mode === 'clone' ? (
         <>
           {/* Speaker Name Dropdown */}
-          <div style={fieldStyle}>
-            <label htmlFor="name" style={labelStyle}>
+          <div style={styles.fieldStyle}>
+            <label htmlFor="name" style={styles.labelStyle}>
               Speaker Name:
             </label>
             <select
@@ -257,7 +310,7 @@ const LandingPage = () => {
               value={selectedName}
               onChange={(e) => handleSpeakerChange(e.target.value)}
               disabled={charactersLoading}
-              style={inputStyle}
+              style={styles.inputStyle}
             >
               {characters.map((char) => (
                 <option key={char.name} value={char.name}>
@@ -265,12 +318,12 @@ const LandingPage = () => {
                 </option>
               ))}
             </select>
-            {charactersLoading && <p style={helpStyle}>Loading speakers...</p>}
+            {charactersLoading && <p style={styles.helpStyle}>Loading speakers...</p>}
           </div>
 
           {/* Reference Label Dropdown (filtered) */}
-          <div style={fieldStyle}>
-            <label htmlFor="ref" style={labelStyle}>
+          <div style={styles.fieldStyle}>
+            <label htmlFor="ref" style={styles.labelStyle}>
               Reference Label:
             </label>
             <select
@@ -278,7 +331,7 @@ const LandingPage = () => {
               value={selectedRef}
               onChange={(e) => setSelectedRef(e.target.value)}
               disabled={charactersLoading || !selectedName}
-              style={inputStyle}
+              style={styles.inputStyle}
             >
               {availableRefs.map((ref) => (
                 <option key={ref} value={ref}>
@@ -287,24 +340,25 @@ const LandingPage = () => {
               ))}
             </select>
             {selectedName && !charactersLoading && availableRefs.length === 0 && (
-              <p style={{ ...helpStyle, color: 'red' }}>No references available for this speaker</p>
+              <p style={{ ...styles.helpStyle, color: 'red' }}>
+                No references available for this speaker
+              </p>
             )}
           </div>
         </>
       ) : (
         <>
           {/* Voice Instruction */}
-          <div style={fieldStyle}>
-            <label htmlFor="instruct" style={labelStyle}>
+          <div style={styles.fieldStyle}>
+            <label htmlFor="instruct" style={styles.labelStyle}>
               Voice description:
             </label>
             <textarea
               id="instruct"
               rows={3}
-              value={instruct}
-              onChange={(e) => setInstruct(e.target.value)}
+              {...makeInputProps(instructRef, instruct, setInstruct, 'instruct', handlePaste)}
               placeholder="A calm, deep male voice with a slight British accent..."
-              style={inputStyle}
+              style={styles.inputStyle}
             />
           </div>
 
@@ -336,7 +390,7 @@ const LandingPage = () => {
                     min={field.min}
                     max={field.max}
                     step={field.step}
-                    style={{ ...inputStyle, marginTop: '0.25rem' }}
+                    style={{ ...styles.inputStyle, marginTop: '0.25rem' }}
                   />
                 </label>
               ))}
@@ -346,34 +400,32 @@ const LandingPage = () => {
       )}
 
       {/* Text Input */}
-      <div style={fieldStyle}>
-        <label htmlFor="text" style={labelStyle}>
+      <div style={styles.fieldStyle}>
+        <label htmlFor="text" style={styles.labelStyle}>
           Text to speak:
         </label>
         <textarea
           id="text"
           rows={3}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          {...makeInputProps(textRef, text, setText, 'text', handlePaste)}
           placeholder="Enter the text you want to convert to speech..."
-          style={inputStyle}
+          style={styles.inputStyle}
         />
       </div>
 
       {/* Filename Input */}
-      <div style={fieldStyle}>
-        <label htmlFor="filename" style={labelStyle}>
+      <div style={styles.fieldStyle}>
+        <label htmlFor="filename" style={styles.labelStyle}>
           Output filename (without .mp3):
         </label>
         <input
           id="filename"
           type="text"
-          value={filename}
-          onChange={(e) => setFilename(e.target.value)}
+          {...makeInputProps(filenameRef, filename, setFilename, 'filename', handlePaste)}
           placeholder="my_audio_file"
-          style={inputStyle}
+          style={styles.inputStyle}
         />
-        <p style={helpStyle}>
+        <p style={styles.helpStyle}>
           {mode === 'clone'
             ? 'Saved as <speaker>_<filename>_01.mp3, incrementing the number if it already exists.'
             : 'Saved as Design_<filename>_01.mp3, incrementing the number if it already exists.'}
@@ -385,6 +437,8 @@ const LandingPage = () => {
         <button
           type="button"
           onClick={handleGenerate}
+          onMouseEnter={() => setHoveredButton('generate-btn')}
+          onMouseLeave={() => setHoveredButton(null)}
           disabled={!canGenerate}
           style={{
             padding: '0.75rem 1.5rem',
@@ -392,7 +446,7 @@ const LandingPage = () => {
             cursor: canGenerate ? 'pointer' : 'not-allowed',
             background: canGenerate ? '#0066cc' : '#cccccc',
             color: 'white',
-            border: 'none',
+            border: hoveredButton === 'generate-btn' ? '1px solid #004a99' : 'none',
             borderRadius: '4px',
             width: '100%',
             maxWidth: '300px',

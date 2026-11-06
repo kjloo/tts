@@ -23,3 +23,8 @@ client/.vite/
 
 # Logs
 logs/
+
+# Plannotator reports/plans
+*.plannotator
+plannotator-report
+client/src/plannotator-report

@@ -3,21 +3,21 @@ import { fetchLanguages } from '../api/language';
 import { fetchCharacters } from '../api/dataset';
 import { generateSpeech } from '../api/generate';
 
-// Memoized shared styles to prevent unnecessary re-render on every state update
-const styles = useMemo(
-  () => ({
-    inputStyle: {
-      width: '100%',
-      padding: '0.5rem',
-      fontSize: '1rem',
-      boxSizing: 'border-box',
-    },
-    labelStyle: { display: 'block', marginBottom: '0.5rem' },
-    fieldStyle: { marginBottom: '1rem' },
-    helpStyle: { fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' },
-  }),
-  [],
-);
+// Shared styles. Plain module-level constants: these objects never change
+// between renders, so there is nothing to memoize. Using useMemo here would
+// be an invalid hook call (hooks can only run inside a component), which
+// crashes the whole app on load.
+const styles = {
+  inputStyle: {
+    width: '100%',
+    padding: '0.5rem',
+    fontSize: '1rem',
+    boxSizing: 'border-box',
+  },
+  labelStyle: { display: 'block', marginBottom: '0.5rem' },
+  fieldStyle: { marginBottom: '1rem' },
+  helpStyle: { fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' },
+};
 
 const modeButtonStyle = (active) => ({
   flex: 1,

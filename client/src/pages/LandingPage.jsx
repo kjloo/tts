@@ -208,28 +208,14 @@ const LandingPage = () => {
     [temperature, topK, topP, repetitionPenalty, maxTokens],
   );
 
-  // Handle paste for text inputs using the Clipboard API
-  // to ensure immediate response after click, avoiding any
-  // async delay from native paste event handling.
-  const handlePaste = useCallback((e, setValue) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData.getData('text/plain');
-    if (!pastedText) return;
-
-    setValue((prev) => prev + pastedText);
-
-    // Preserve focus/cursor position after paste
-    const input = e.target;
-    input.focus();
-  }, []);
-
-  // Create input element props with paste handling, hover, and focus stabilization
+  // Create input element props with onChange only.
+  // Pasting is handled natively by the browser, which correctly
+  // replaces selected text and appends to unselected text.
   const makeInputProps = useCallback(
-    (valueRef, value, onChange, inputId, pasteHandler) => ({
+    (valueRef, value, onChange, inputId) => ({
       id: inputId,
       value,
       onChange: (e) => onChange(e.target.value),
-      onPaste: (e) => pasteHandler(e, onChange),
       ref: valueRef,
     }),
     [],
@@ -356,7 +342,7 @@ const LandingPage = () => {
             <textarea
               id="instruct"
               rows={3}
-              {...makeInputProps(instructRef, instruct, setInstruct, 'instruct', handlePaste)}
+              {...makeInputProps(instructRef, instruct, setInstruct, 'instruct')}
               placeholder="A calm, deep male voice with a slight British accent..."
               style={styles.inputStyle}
             />
@@ -407,7 +393,7 @@ const LandingPage = () => {
         <textarea
           id="text"
           rows={3}
-          {...makeInputProps(textRef, text, setText, 'text', handlePaste)}
+          {...makeInputProps(textRef, text, setText, 'text')}
           placeholder="Enter the text you want to convert to speech..."
           style={styles.inputStyle}
         />
@@ -421,7 +407,7 @@ const LandingPage = () => {
         <input
           id="filename"
           type="text"
-          {...makeInputProps(filenameRef, filename, setFilename, 'filename', handlePaste)}
+          {...makeInputProps(filenameRef, filename, setFilename, 'filename')}
           placeholder="my_audio_file"
           style={styles.inputStyle}
         />

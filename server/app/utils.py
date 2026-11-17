@@ -2,8 +2,6 @@ import json
 import os
 from pathlib import Path
 
-from mlx_audio.tts.utils import load_model
-
 
 def get_available_names(jsonl_path):
     """Returns a sorted list of all unique names in the dataset."""
@@ -67,4 +65,6 @@ def load_reference_from_jsonl(jsonl_path, name, label):
 
 def setup_tts_model(model_id):
     print(f"DEBUG: Loading {model_id}...")
+    from mlx_audio.tts.utils import load_model
+
     return load_model(model_id, fix_mistral_regex=True)

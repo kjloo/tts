@@ -18,7 +18,9 @@ def configure_logger(
     format_str: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 ) -> logging.Logger:
     """Configure and return the shared logger."""
-    log_path = Path(log_dir)
+    log_path = (
+        Path(__file__).resolve().parents[2] / "logs"
+    )  # absolute path to server/logs
     log_path.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger("tts_api")

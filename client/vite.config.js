@@ -9,7 +9,9 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         configure: (proxy) => {
-          proxy.on('error', () => {}); // suppress ECONNREFUSED noise
+          proxy.on('error', (err) => {
+            console.error('[vite proxy] proxy error:', err);
+          });
         },
       },
     },

@@ -18,7 +18,7 @@ app: FastAPI = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,6 +47,3 @@ def register_all_blueprints(app: FastAPI):
 
     # Serve generated MP3s so the client can play and download them.
     app.mount("/api/output", StaticFiles(directory=OUTPUT_DIR), name="output")
-
-
-register_all_blueprints(app)

@@ -2,36 +2,18 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { fetchLanguages } from '../api/language';
 import { fetchCharacters } from '../api/dataset';
 import { generateSpeech } from '../api/generate';
-
-// Shared styles. Plain module-level constants: these objects never change
-// between renders, so there is nothing to memoize. Using useMemo here would
-// be an invalid hook call (hooks can only run inside a component), which
-// crashes the whole app on load.
-const styles = {
-  inputStyle: {
-    width: '100%',
-    padding: '0.5rem',
-    fontSize: '1rem',
-    boxSizing: 'border-box',
-  },
-  labelStyle: { display: 'block', marginBottom: '0.5rem' },
-  fieldStyle: { marginBottom: '1rem' },
-  helpStyle: { fontSize: '0.8rem', color: '#666', marginTop: '0.25rem' },
-};
-
-const modeButtonStyle = (active) => ({
-  flex: 1,
-  padding: '0.65rem 1rem',
-  fontSize: '0.95rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  borderRadius: '4px',
-  border: '1px solid #0066cc',
-  background: active ? '#0066cc' : '#f2f2f2',
-  color: active ? 'white' : '#333',
-});
+import { Dices } from 'lucide-react';
+import {
+  styles,
+  modeButtonStyle,
+  speakerRowStyle,
+  randomSpeakerButtonStyle,
+  selectStyle,
+} from './LandingPage.styles';
 
 const LandingPage = () => {
+  // Hover state for buttons to ensure instant hover feedback
+  const [hoveredButton, setHoveredButton] = useState(null);
   const [mode, setMode] = useState('clone');
 
   const [languages, setLanguages] = useState([]);
@@ -63,9 +45,6 @@ const LandingPage = () => {
   const textRef = useRef(null);
   const filenameRef = useRef(null);
   const instructRef = useRef(null);
-
-  // Hover state for buttons to ensure instant hover feedback
-  const [hoveredButton, setHoveredButton] = useState(null);
 
   // Fetch languages on mount
   useEffect(() => {
@@ -105,6 +84,13 @@ const LandingPage = () => {
     setSelectedName(speaker);
     const char = characters.find((c) => c.name === speaker);
     setSelectedRef(char ? char.refs[0] || '' : '');
+  };
+
+  const handleRandomSpeaker = () => {
+    if (charactersLoading || characters.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    const randomChar = characters[randomIndex];
+    handleSpeakerChange(randomChar.name);
   };
 
   const handleGenerate = async () => {
@@ -273,7 +259,7 @@ const LandingPage = () => {
           value={selectedLang}
           onChange={(e) => setSelectedLang(e.target.value)}
           disabled={languagesLoading}
-          style={styles.inputStyle}
+          style={selectStyle}
         >
           {languages.map((lang) => (
             <option key={lang} value={lang}>
@@ -291,19 +277,38 @@ const LandingPage = () => {
             <label htmlFor="name" style={styles.labelStyle}>
               Speaker Name:
             </label>
-            <select
-              id="name"
-              value={selectedName}
-              onChange={(e) => handleSpeakerChange(e.target.value)}
-              disabled={charactersLoading}
-              style={styles.inputStyle}
-            >
-              {characters.map((char) => (
-                <option key={char.name} value={char.name}>
-                  {char.name}
-                </option>
-              ))}
-            </select>
+            <div style={speakerRowStyle}>
+              <select
+                id="name"
+                value={selectedName}
+                onChange={(e) => handleSpeakerChange(e.target.value)}
+                disabled={charactersLoading}
+                style={{
+                  ...selectStyle,
+                  flex: 1,
+                }}
+              >
+                {characters.map((char) => (
+                  <option key={char.name} value={char.name}>
+                    {char.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                aria-label="Random speaker"
+                onClick={handleRandomSpeaker}
+                onMouseEnter={() => setHoveredButton('random-speaker')}
+                onMouseLeave={() => setHoveredButton(null)}
+                disabled={charactersLoading || characters.length === 0}
+                style={{
+                  ...randomSpeakerButtonStyle,
+                  color: hoveredButton === 'random-speaker' ? '#004a99' : '#777',
+                }}
+              >
+                <Dices size={18} />
+              </button>
+            </div>
             {charactersLoading && <p style={styles.helpStyle}>Loading speakers...</p>}
           </div>
 
@@ -317,7 +322,7 @@ const LandingPage = () => {
               value={selectedRef}
               onChange={(e) => setSelectedRef(e.target.value)}
               disabled={charactersLoading || !selectedName}
-              style={styles.inputStyle}
+              style={selectStyle}
             >
               {availableRefs.map((ref) => (
                 <option key={ref} value={ref}>

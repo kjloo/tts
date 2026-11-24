@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 
+import numpy as np
+
 
 def get_available_names(jsonl_path):
     """Returns a sorted list of all unique names in the dataset."""
@@ -68,3 +70,30 @@ def setup_tts_model(model_id):
     from mlx_audio.tts.utils import load_model
 
     return load_model(model_id, fix_mistral_regex=True)
+
+
+def pad_audio_if_too_short(audio, sample_rate, min_duration):
+    """Pad audio with silence if duration is shorter than min_duration.
+
+    Args:
+        audio: numpy array of audio samples
+        sample_rate: sample rate in Hz
+        min_duration: minimum duration in seconds
+
+    Returns:
+        padded_audio: audio array with minimum duration
+    """
+    audio_duration = len(audio) / sample_rate
+    if audio_duration >= min_duration:
+        return audio
+
+    # Calculate how many samples we need to add
+    samples_to_add = int((min_duration - audio_duration) * sample_rate)
+    if samples_to_add <= 0:
+        return audio
+
+    # Create silence samples
+    silence = np.zeros(int(samples_to_add), dtype=audio.dtype)
+
+    # Pad with silence at the end
+    return np.concatenate([audio, silence])

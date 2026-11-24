@@ -22,6 +22,8 @@ SAMPLING_KEYS = (
     "max_tokens",
 )
 
+MIN_AUDIO_DURATION = 2.0  # seconds — guard against clipped/under-generated output
+
 
 def _get_model(app: Any, mode: str):
     """Load and cache the model for a generation mode."""
@@ -73,7 +75,8 @@ async def generate_speech(request: Request, payload: dict):
         "top_k": 50,               // generate (optional)
         "top_p": 1.0,              // generate (optional)
         "repetition_penalty": 1.05, // generate (optional)
-        "max_tokens": 2048         // generate (optional)
+        "max_tokens": 2048,        // generate (optional)
+        "min_audio_duration": 2.0  // optional, seconds (pads short outputs)
     }
 
     The filename is optional. When provided, it is indexed starting at _01
@@ -85,6 +88,7 @@ async def generate_speech(request: Request, payload: dict):
     ref = payload.get("ref")
     filename = payload.get("filename") or payload.get("out")
     instruct = payload.get("instruct")
+    min_audio_duration = payload.get("min_audio_duration") or MIN_AUDIO_DURATION
 
     mode = payload.get("mode")
     if mode is None:
@@ -141,6 +145,16 @@ async def generate_speech(request: Request, payload: dict):
     if not results:
         raise HTTPException(500, "No audio generated")
 
+    # Post-process audio to guard against clipping / under-generation on short inputs
+    audio_data = np.array(results[0].audio)
+    sr = getattr(model, "sample_rate", 24000)
+    if len(audio_data) / sr < min_audio_duration:
+        # Pad with silence to meet minimum duration
+        samples_to_add = int((min_audio_duration - len(audio_data) / sr) * sr)
+        if samples_to_add > 0:
+            silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
+            audio_data = np.concatenate([audio_data, silence])
+
     # Save as MP3. The filename is always indexed and prefixed by speaker name.
     file_speaker = name if mode == "clone" else (name or "Design")
     out_path = get_unique_path(
@@ -151,9 +165,6 @@ async def generate_speech(request: Request, payload: dict):
         filename,
         suffix=".mp3",
     )
-
-    audio_data = np.array(results[0].audio)
-    sr = getattr(model, "sample_rate", 24000)
 
     sf.write(str(out_path), audio_data, sr, format="MP3")
 

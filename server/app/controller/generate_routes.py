@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 import soundfile as sf
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 
 from app.service.dataset_service import DatasetService
 from app.utils import get_unique_path
@@ -154,11 +155,14 @@ async def generate_speech(request: Request, payload: dict):
     audio_data = np.array(results[0].audio)
     sr = getattr(model, "sample_rate", 24000)
     if len(audio_data) / sr < min_audio_duration:
-        # Pad with silence to meet minimum duration
-        samples_to_add = int((min_audio_duration - len(audio_data) / sr) * sr)
-        if samples_to_add > 0:
-            silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
-            audio_data = np.concatenate([audio_data, silence])
+        # Pad with silence to meet minimum duration, but never exceed MAX_AUDIO_DURATION total
+        current_duration = len(audio_data) / sr
+        max_add_duration = MAX_AUDIO_DURATION - current_duration
+        if max_add_duration > 0:
+            samples_to_add = int(max_add_duration * sr)
+            if samples_to_add > 0:
+                silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
+                audio_data = np.concatenate([audio_data, silence])
 
     # Save as MP3. The filename is always indexed and prefixed by speaker name.
     file_speaker = name if mode == "clone" else (name or "Design")
@@ -171,7 +175,9 @@ async def generate_speech(request: Request, payload: dict):
         suffix=".mp3",
     )
 
-    sf.write(str(out_path), audio_data, sr, format="MP3")
+    await run_in_threadpool(
+        lambda: sf.write(str(out_path), audio_data, sr, format="MP3")
+    )
 
     return {
         "filepath": f"/api/output/{out_path.name}",

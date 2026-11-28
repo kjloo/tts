@@ -54,35 +54,10 @@ def _sampling_options(payload: dict) -> dict:
     return options
 
 
-@generate_routes.post("/")
-async def generate_speech(request: Request, payload: dict):
+def _generate_speech_sync(request: Request, payload: dict):
     """
-    Generate MP3 from text using an MLX Qwen3-TTS model.
-
-    Two modes are supported:
-
-    - ``clone``: Clone a dataset voice using its reference audio and transcript.
-    - ``generate``: Create a new voice from a natural-language description.
-
-    Expected payload:
-    {
-        "mode": "clone" | "generate",
-        "text": "Hello world",
-        "lang": "English",
-        "filename": "my_audio_file",
-        "name": "SpeakerName",     // clone only
-        "ref": "label",            // clone only
-        "instruct": "A calm ...",  // generate only
-        "temperature": 0.9,        // generate (optional)
-        "top_k": 50,               // generate (optional)
-        "top_p": 1.0,              // generate (optional)
-        "repetition_penalty": 1.05, // generate (optional)
-        "max_tokens": 2048,        // generate (optional)
-        "min_audio_duration": 2.0  // optional, seconds (pads short outputs)
-    }
-
-    The filename is optional. When provided, it is indexed starting at _01
-    (e.g. Fiora_hello_01.mp3) and prefixed with the speaker name in clone mode.
+    Synchronous worker that does the blocking generation + MP3 write.
+    Runs in a threadpool so the async event loop stays free.
     """
     text = payload.get("text")
     lang = payload.get("lang")
@@ -124,7 +99,7 @@ async def generate_speech(request: Request, payload: dict):
         except (ValueError, KeyError) as e:
             raise HTTPException(400, str(e)) from e
 
-    # Generate audio
+    # Generate audio (blocking MLX inference)
     try:
         if mode == "clone":
             results = list(
@@ -163,7 +138,7 @@ async def generate_speech(request: Request, payload: dict):
             silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
             audio_data = np.concatenate([audio_data, silence])
 
-    # Save as MP3. The filename is always indexed and prefixed by speaker name.
+    # Save as MP3
     file_speaker = name if mode == "clone" else (name or "Design")
     out_path = get_unique_path(
         "output",
@@ -174,12 +149,44 @@ async def generate_speech(request: Request, payload: dict):
         suffix=".mp3",
     )
 
-    await run_in_threadpool(
-        lambda: sf.write(str(out_path), audio_data, sr, format="MP3")
-    )
+    sf.write(str(out_path), audio_data, sr, format="MP3")
 
     return {
         "filepath": f"/api/output/{out_path.name}",
         "filename": out_path.name,
         "mode": mode,
     }
+
+
+@generate_routes.post("/")
+async def generate_speech(request: Request, payload: dict):
+    """
+    Generate MP3 from text using an MLX Qwen3-TTS model.
+
+    Two modes are supported:
+
+    - ``clone``: Clone a dataset voice using its reference audio and transcript.
+    - ``generate``: Create a new voice from a natural-language description.
+
+    Expected payload:
+    {
+        "mode": "clone" | "generate",
+        "text": "Hello world",
+        "lang": "English",
+        "filename": "my_audio_file",
+        "name": "SpeakerName",     // clone only
+        "ref": "label",            // clone only
+        "instruct": "A calm ...",  // generate only
+        "temperature": 0.9,        // generate (optional)
+        "top_k": 50,               // generate (optional)
+        "top_p": 1.0,              // generate (optional)
+        "repetition_penalty": 1.05, // generate (optional)
+        "max_tokens": 2048,        // generate (optional)
+        "min_audio_duration": 2.0  // optional, seconds (pads short outputs)
+    }
+
+    The filename is optional. When provided, it is indexed starting at _01
+    (e.g. Fiora_hello_01.mp3) and prefixed with the speaker name in clone mode.
+    """
+    # Offload all blocking work to a threadpool so the event loop isn't blocked
+    return await run_in_threadpool(_generate_speech_sync, request, payload)

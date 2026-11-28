@@ -157,12 +157,11 @@ async def generate_speech(request: Request, payload: dict):
     if len(audio_data) / sr < min_audio_duration:
         # Pad with silence to meet minimum duration, but never exceed MAX_AUDIO_DURATION total
         current_duration = len(audio_data) / sr
-        max_add_duration = MAX_AUDIO_DURATION - current_duration
-        if max_add_duration > 0:
-            samples_to_add = int(max_add_duration * sr)
-            if samples_to_add > 0:
-                silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
-                audio_data = np.concatenate([audio_data, silence])
+        target_duration = min(min_audio_duration, MAX_AUDIO_DURATION)
+        samples_to_add = int((target_duration - current_duration) * sr)
+        if samples_to_add > 0:
+            silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
+            audio_data = np.concatenate([audio_data, silence])
 
     # Save as MP3. The filename is always indexed and prefixed by speaker name.
     file_speaker = name if mode == "clone" else (name or "Design")

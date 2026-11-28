@@ -23,6 +23,7 @@ SAMPLING_KEYS = (
 )
 
 MIN_AUDIO_DURATION = 2.0  # seconds — guard against clipped/under-generated output
+MAX_AUDIO_DURATION = 60.0  # seconds — cap to prevent unbounded memory use
 
 
 def _get_model(app: Any, mode: str):
@@ -89,6 +90,10 @@ async def generate_speech(request: Request, payload: dict):
     filename = payload.get("filename") or payload.get("out")
     instruct = payload.get("instruct")
     min_audio_duration = payload.get("min_audio_duration") or MIN_AUDIO_DURATION
+    # Clamp to [MIN_AUDIO_DURATION, MAX_AUDIO_DURATION] to prevent unbounded padding
+    min_audio_duration = max(
+        MIN_AUDIO_DURATION, min(float(min_audio_duration), MAX_AUDIO_DURATION)
+    )
 
     mode = payload.get("mode")
     if mode is None:

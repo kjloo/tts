@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 import soundfile as sf
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 
 from app.service.dataset_service import DatasetService
 from app.utils import get_unique_path
@@ -21,6 +22,9 @@ SAMPLING_KEYS = (
     "repetition_penalty",
     "max_tokens",
 )
+
+MIN_AUDIO_DURATION = 2.0  # seconds — guard against clipped/under-generated output
+MAX_AUDIO_DURATION = 60.0  # seconds — cap to prevent unbounded memory use
 
 
 def _get_model(app: Any, mode: str):
@@ -50,34 +54,10 @@ def _sampling_options(payload: dict) -> dict:
     return options
 
 
-@generate_routes.post("/")
-async def generate_speech(request: Request, payload: dict):
+def _generate_speech_sync(request: Request, payload: dict):
     """
-    Generate MP3 from text using an MLX Qwen3-TTS model.
-
-    Two modes are supported:
-
-    - ``clone``: Clone a dataset voice using its reference audio and transcript.
-    - ``generate``: Create a new voice from a natural-language description.
-
-    Expected payload:
-    {
-        "mode": "clone" | "generate",
-        "text": "Hello world",
-        "lang": "English",
-        "filename": "my_audio_file",
-        "name": "SpeakerName",     // clone only
-        "ref": "label",            // clone only
-        "instruct": "A calm ...",  // generate only
-        "temperature": 0.9,        // generate (optional)
-        "top_k": 50,               // generate (optional)
-        "top_p": 1.0,              // generate (optional)
-        "repetition_penalty": 1.05, // generate (optional)
-        "max_tokens": 2048         // generate (optional)
-    }
-
-    The filename is optional. When provided, it is indexed starting at _01
-    (e.g. Fiora_hello_01.mp3) and prefixed with the speaker name in clone mode.
+    Synchronous worker that does the blocking generation + MP3 write.
+    Runs in a threadpool so the async event loop stays free.
     """
     text = payload.get("text")
     lang = payload.get("lang")
@@ -85,6 +65,11 @@ async def generate_speech(request: Request, payload: dict):
     ref = payload.get("ref")
     filename = payload.get("filename") or payload.get("out")
     instruct = payload.get("instruct")
+    min_audio_duration = payload.get("min_audio_duration") or MIN_AUDIO_DURATION
+    # Clamp to [MIN_AUDIO_DURATION, MAX_AUDIO_DURATION] to prevent unbounded padding
+    min_audio_duration = max(
+        MIN_AUDIO_DURATION, min(float(min_audio_duration), MAX_AUDIO_DURATION)
+    )
 
     mode = payload.get("mode")
     if mode is None:
@@ -114,7 +99,7 @@ async def generate_speech(request: Request, payload: dict):
         except (ValueError, KeyError) as e:
             raise HTTPException(400, str(e)) from e
 
-    # Generate audio
+    # Generate audio (blocking MLX inference)
     try:
         if mode == "clone":
             results = list(
@@ -141,7 +126,19 @@ async def generate_speech(request: Request, payload: dict):
     if not results:
         raise HTTPException(500, "No audio generated")
 
-    # Save as MP3. The filename is always indexed and prefixed by speaker name.
+    # Post-process audio to guard against clipping / under-generation on short inputs
+    audio_data = np.array(results[0].audio)
+    sr = getattr(model, "sample_rate", 24000)
+    if len(audio_data) / sr < min_audio_duration:
+        # Pad with silence to meet minimum duration, but never exceed MAX_AUDIO_DURATION total
+        current_duration = len(audio_data) / sr
+        target_duration = min(min_audio_duration, MAX_AUDIO_DURATION)
+        samples_to_add = int((target_duration - current_duration) * sr)
+        if samples_to_add > 0:
+            silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
+            audio_data = np.concatenate([audio_data, silence])
+
+    # Save as MP3
     file_speaker = name if mode == "clone" else (name or "Design")
     out_path = get_unique_path(
         "output",
@@ -152,9 +149,6 @@ async def generate_speech(request: Request, payload: dict):
         suffix=".mp3",
     )
 
-    audio_data = np.array(results[0].audio)
-    sr = getattr(model, "sample_rate", 24000)
-
     sf.write(str(out_path), audio_data, sr, format="MP3")
 
     return {
@@ -162,3 +156,37 @@ async def generate_speech(request: Request, payload: dict):
         "filename": out_path.name,
         "mode": mode,
     }
+
+
+@generate_routes.post("/")
+async def generate_speech(request: Request, payload: dict):
+    """
+    Generate MP3 from text using an MLX Qwen3-TTS model.
+
+    Two modes are supported:
+
+    - ``clone``: Clone a dataset voice using its reference audio and transcript.
+    - ``generate``: Create a new voice from a natural-language description.
+
+    Expected payload:
+    {
+        "mode": "clone" | "generate",
+        "text": "Hello world",
+        "lang": "English",
+        "filename": "my_audio_file",
+        "name": "SpeakerName",     // clone only
+        "ref": "label",            // clone only
+        "instruct": "A calm ...",  // generate only
+        "temperature": 0.9,        // generate (optional)
+        "top_k": 50,               // generate (optional)
+        "top_p": 1.0,              // generate (optional)
+        "repetition_penalty": 1.05, // generate (optional)
+        "max_tokens": 2048,        // generate (optional)
+        "min_audio_duration": 2.0  // optional, seconds (pads short outputs)
+    }
+
+    The filename is optional. When provided, it is indexed starting at _01
+    (e.g. Fiora_hello_01.mp3) and prefixed with the speaker name in clone mode.
+    """
+    # Offload all blocking work to a threadpool so the event loop isn't blocked
+    return await run_in_threadpool(_generate_speech_sync, request, payload)

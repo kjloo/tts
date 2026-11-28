@@ -7,6 +7,8 @@ import soundfile as sf
 from app import utils
 from app.service.language_service import LanguageService
 
+MIN_AUDIO_DURATION = 2.0  # seconds — guard against clipped/under-generated output
+
 
 def interactive_picker(options, title):
     if not options:
@@ -96,7 +98,13 @@ def main():
         audio_data = np.array(results[0].audio)
         sr = getattr(model, "sample_rate", 24000)
 
-        # soundfile natively compresses the raw data arrays to MP3 on modern systems
+        # Post-process audio to guard against clipping / under-generation on short inputs
+        if len(audio_data) / sr < MIN_AUDIO_DURATION:
+            samples_to_add = int((MIN_AUDIO_DURATION - len(audio_data) / sr) * sr)
+            if samples_to_add > 0:
+                silence = np.zeros(samples_to_add, dtype=audio_data.dtype)
+                audio_data = np.concatenate([audio_data, silence])
+
         sf.write(str(out_path), audio_data, sr, format="MP3")
         print(f"\n✨ Success! Saved compressed audio to: {out_path}")
     else:
